@@ -58,27 +58,38 @@ jobs:
   - task: CopyFiles@2
     displayName: Copy signed AppxBundle to vpack staging folder
     inputs:
-        sourceFolder: $(Build.ArtifactStagingDirectory)\appxBundleSigned
-        targetFolder: $(Build.ArtifactStagingDirectory)\vpack\appxBundle
+      sourceFolder: $(Build.ArtifactStagingDirectory)\appxBundleSigned
+      targetFolder: $(Build.ArtifactStagingDirectory)\vpack\appxBundle
 
   - task: PkgESVPack@10
     displayName: Create and push vpack for app
     env:
-        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
     inputs:
-        sourceDirectory: $(Build.ArtifactStagingDirectory)\vpack\appxBundle
-        description: VPack for the Calculator Application
-        pushPkgName: calculator.app
-        version: $(versionMajor).$(versionMinor).$(versionBuild)
-        owner: paxeeapps
+      sourceDirectory: $(Build.ArtifactStagingDirectory)\vpack\appxBundle
+      description: VPack for the Calculator Application
+      pushPkgName: calculator.app
+      version: $(versionMajor).$(versionMinor).$(versionBuild)
+      owner: paxeeapps
+
+  - task: CopyFiles@2
+    displayName: Copy vpack manifest to staging folder
+    inputs:
+      sourceFolder: $(XES_VPACKMANIFESTDIRECTORY)
+      contents: $(XES_VPACKMANIFESTNAME)
+      targetFolder: $(Build.ArtifactStagingDirectory)\vpack\app
 
   - task: PublishBuildArtifacts@1
-    displayName: Publish vpack\app artifact with vpack manifest
+    displayName: Publish vpackManifest artifact
     inputs:
-        pathtoPublish: $(XES_VPACKMANIFESTDIRECTORY)\$(XES_VPACKMANIFESTNAME)
-        artifactName: vpack\app
+      pathtoPublish: $(Build.ArtifactStagingDirectory)\vpack\app
+      artifactName: vpackManifest
 
-    # TODO (macool): create and push internal test packages and test config
+  - task: PkgESFCIBGit@10
+    displayName: Check in vpack manifest to OS branch rs_apps_validate
+    inputs:
+      configPath: $(Build.SourcesDirectory)\build\config\rs_apps_validate.json
+      dropOverride: $(Build.ArtifactStagingDirectory)
 
   - task: UniversalPackages@0
     displayName: Download internals package
