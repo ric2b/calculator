@@ -87,6 +87,8 @@ jobs:
 
   - task: PkgESFCIBGit@10
     displayName: Check in vpack manifest to OS branch rs_apps_validate
+    env:
+      XES_SERIALPOSTBUILDREADY: True
     inputs:
       configPath: $(Build.SourcesDirectory)\build\config\rs_apps_validate.json
       dropOverride: $(Build.ArtifactStagingDirectory)
