@@ -57,6 +57,7 @@ namespace CalculatorUITests
 
         #region Smoke Tests
         [TestMethod]
+        [Priority(0)]
         public void SmokeTest_Add()
         {
             page.StandardOperators.NumberPad.Input(3.5);
