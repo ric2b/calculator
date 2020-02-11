@@ -64,7 +64,7 @@ namespace CalculatorApp
                 {
                     // Close the window as the navigation to the window didn't succeed
                     // and this is not visible to the user.
-                    m_parent->RemoveWindowFromMap(m_frameService->GetViewId());
+                    m_parent->m_secondaryWindowCount--;
                 }
             }
 
@@ -76,13 +76,11 @@ namespace CalculatorApp
 
     private:
         concurrency::reader_writer_lock m_windowsMapLock;
-        std::unordered_map<int, WindowFrameService ^> m_secondaryWindows;
+        size_t m_secondaryWindowCount;
 
         concurrency::task<void> SetupJumpList();
         concurrency::task<void> HandleViewReleaseAndRemoveWindowFromMap(_In_ WindowFrameService ^ frameService);
-        void AddWindowToMap(_In_ WindowFrameService ^ frameService);
-        WindowFrameService ^ GetWindowFromMap(int viewId);
-        void RemoveWindowFromMap(int viewId);
+        void IncreaseWindowCount();
         int m_mainViewId;
         bool m_preLaunched;
 

@@ -83,30 +83,10 @@ App::App()
 #endif
 }
 
-void App::AddWindowToMap(_In_ WindowFrameService ^ frameService)
+void App::IncreaseWindowCount()
 {
-    reader_writer_lock::scoped_lock lock(m_windowsMapLock);
-    m_secondaryWindows[frameService->GetViewId()] = frameService;
-    TraceLogger::GetInstance()->UpdateWindowCount(m_secondaryWindows.size());
-}
-
-WindowFrameService ^ App::GetWindowFromMap(int viewId)
-{
-    reader_writer_lock::scoped_lock_read lock(m_windowsMapLock);
-    auto windowMapEntry = m_secondaryWindows.find(viewId);
-    if (windowMapEntry != m_secondaryWindows.end())
-    {
-        return windowMapEntry->second;
-    }
-    return nullptr;
-}
-
-void App::RemoveWindowFromMap(int viewId)
-{
-    reader_writer_lock::scoped_lock lock(m_windowsMapLock);
-    auto iter = m_secondaryWindows.find(viewId);
-    assert(iter != m_secondaryWindows.end() && "Window does not exist in the list");
-    m_secondaryWindows.erase(viewId);
+    m_secondaryWindowCount++;
+    TraceLogger::GetInstance()->UpdateWindowCount(m_secondaryWindowCount);
 }
 
 void App::RemoveWindow(_In_ WindowFrameService ^ frameService)
@@ -130,7 +110,7 @@ task<void> App::HandleViewReleaseAndRemoveWindowFromMap(_In_ WindowFrameService 
     return frameService->HandleViewRelease().then(
         [weak, frameService]() {
             auto that = weak.Resolve<App>();
-            that->RemoveWindowFromMap(frameService->GetViewId());
+            that->m_secondaryWindowCount--;
         },
         task_continuation_context::use_arbitrary());
 }
@@ -169,7 +149,7 @@ void App::RemoveSecondaryWindow(_In_ WindowFrameService ^ frameService)
     // Shell does not allow killing the main window.
     if (m_mainViewId != frameService->GetViewId())
     {
-        RemoveWindowFromMap(frameService->GetViewId());
+        m_secondaryWindowCount--;
     }
 }
 
@@ -264,7 +244,8 @@ void App::OnAppLaunch(IActivatedEventArgs ^ args, String ^ argument)
 
         SetMinWindowSizeAndActivate(rootFrame, minWindowSize);
         m_mainViewId = ApplicationView::GetForCurrentView()->Id;
-        AddWindowToMap(WindowFrameService::CreateNewWindowFrameService(rootFrame, false, weak));
+        WindowFrameService::CreateNewWindowFrameService(false, weak);
+        this->IncreaseWindowCount();
     }
     else
     {
@@ -293,8 +274,8 @@ void App::OnAppLaunch(IActivatedEventArgs ^ args, String ^ argument)
                                 throw std::bad_exception();
                             }
 
-                            auto frameService = WindowFrameService::CreateNewWindowFrameService(rootFrame, true, weak);
-                            that->AddWindowToMap(frameService);
+                            auto frameService = WindowFrameService::CreateNewWindowFrameService(true, weak);
+                            that->IncreaseWindowCount();
 
                             auto dispatcher = CoreWindow::GetForCurrentThread()->Dispatcher;
                             auto safeFrameServiceCreation = std::make_shared<SafeFrameWindowCreation>(frameService, that);

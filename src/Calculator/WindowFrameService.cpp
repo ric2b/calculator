@@ -26,18 +26,17 @@ using namespace Windows::UI::Xaml::Navigation;
 
 namespace CalculatorApp
 {
-    WindowFrameService ^ WindowFrameService::CreateNewWindowFrameService(_In_ Frame ^ viewFrame, bool createdByUs, Platform::WeakReference parent)
+    WindowFrameService ^ WindowFrameService::CreateNewWindowFrameService(bool createdByUs, Platform::WeakReference parent)
     {
         assert(CoreWindow::GetForCurrentThread() != nullptr);
-        auto frameService = ref new WindowFrameService(viewFrame, parent);
+        auto frameService = ref new WindowFrameService(parent);
         frameService->InitializeFrameService(createdByUs);
         return frameService;
     }
 
-    WindowFrameService::WindowFrameService(_In_ Frame ^ frame, WeakReference parent)
+    WindowFrameService::WindowFrameService(WeakReference parent)
         : m_currentWindow(CoreWindow::GetForCurrentThread())
         , m_coreDispatcher(m_currentWindow->Dispatcher)
-        , m_frame(frame)
         , m_parent(parent)
         , m_viewId(ApplicationView::GetApplicationViewIdForWindow(m_currentWindow.Get()))
     {
@@ -57,45 +56,9 @@ namespace CalculatorApp
         }
     }
 
-    CoreDispatcher ^ WindowFrameService::GetCoreDispatcher()
-    {
-        return m_coreDispatcher.Get();
-    }
-
     int WindowFrameService::GetViewId()
     {
         return m_viewId;
-    }
-
-    Frame ^ WindowFrameService::GetFrame()
-    {
-        return m_frame;
-    }
-
-    Page ^ WindowFrameService::GetCurrentPage()
-    {
-        return dynamic_cast<Page ^>(m_frame->Content);
-    }
-
-    void WindowFrameService::SetNewFrame(_In_ Windows::UI::Xaml::Controls::Frame ^ frame)
-    {
-        assert(frame->BackStackDepth == 0);
-        m_frame = frame;
-    }
-
-    void WindowFrameService::RegisterOnWindowClosingHandler(function<void()> onWindowClosingHandler)
-    {
-        m_onWindowClosingHandlers.push_back(onWindowClosingHandler);
-    }
-
-    void WindowFrameService::InvokeWindowClosingHandlers()
-    {
-        // Should be called only once just before we kill the window.
-        for (auto& handler : m_onWindowClosingHandlers)
-        {
-            handler();
-        }
-        m_onWindowClosingHandlers.clear();
     }
 
     task<void> WindowFrameService::HandleViewRelease()
@@ -105,9 +68,8 @@ namespace CalculatorApp
         m_coreDispatcher->RunAsync(CoreDispatcherPriority::Low, ref new DispatchedHandler([that, closingHandlersCompletedEvent]() {
                                        KeyboardShortcutManager::OnWindowClosed(that->m_viewId);
                                        Window::Current->Content = nullptr;
-                                       that->InvokeWindowClosingHandlers();
-                                       // This is to ensure InvokeWindowClosingHandlers is be done before RemoveWindowFromMap
-                                       // If InvokeWindowClosingHandlers throws any exception we want it to crash the application
+                                       // This is to ensure the code above runs before RemoveWindowFromMap
+                                       // If the code above throws any exception we want it to crash the application
                                        // so we are OK not setting closingHandlersCompletedEvent in that case
                                        closingHandlersCompletedEvent.set();
                                        that->m_coreDispatcher->StopProcessEvents();
@@ -133,46 +95,5 @@ namespace CalculatorApp
         {
             parent->RemoveSecondaryWindow(this);
         }
-    }
-
-    void WindowFrameService::RegisterRuntimeWindowService(TypeName serviceId, _In_opt_ Object ^ service)
-    {
-        if (TryResolveRuntimeWindowService(serviceId))
-        {
-            throw ref new InvalidArgumentException(serviceId + L" already registered");
-        }
-
-        m_runtimeServicesMap[serviceId.Name] = service;
-    }
-
-    bool WindowFrameService::RemoveRuntimeWindowService(TypeName serviceId)
-    {
-        return m_runtimeServicesMap.erase(serviceId.Name) > 0;
-    }
-
-    Object ^ WindowFrameService::ResolveRuntimeWindowService(TypeName serviceId)
-    {
-        auto service = TryResolveRuntimeWindowService(serviceId);
-
-        if (service)
-        {
-            return service;
-        }
-        else
-        {
-            throw ref new InvalidArgumentException(serviceId.Name + L" not found");
-        }
-    }
-
-    _Ret_maybenull_ Object ^ WindowFrameService::TryResolveRuntimeWindowService(TypeName serviceId)
-    {
-        auto entry = m_runtimeServicesMap.find(serviceId.Name);
-
-        if (entry != m_runtimeServicesMap.end())
-        {
-            return entry->second;
-        }
-
-        return nullptr;
     }
 }
