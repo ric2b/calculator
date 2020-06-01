@@ -371,7 +371,7 @@ TEST_METHOD(MultipleModesHistoryAddItemTest)
         ChangeMode(viewModels[i], i);
 
         // Validate that the history items list is initially empty
-        VERIFY_IS_TRUE(0 == viewModels[i]->HistoryVM->ItemSize);
+        VERIFY_IS_TRUE(0 == viewModels[i]->HistoryVM->ItemsCount);
     }
 
     // Perform Calculations on both the instances and check that the History items work independently
@@ -392,7 +392,7 @@ TEST_METHOD(MultipleModesHistoryAddItemTest)
     ValidateViewModelByCommands(viewModels[1], scientificModeTestItems, true);
 
     // Assert for the history list items of 1st instance
-    VERIFY_IS_TRUE(1 == viewModels[0]->HistoryVM->ItemSize, nullptr, LINE_INFO());
+    VERIFY_IS_TRUE(1 == viewModels[0]->HistoryVM->ItemsCount, nullptr, LINE_INFO());
 
     auto item1 = static_cast<HistoryItemViewModel ^>(viewModels[0]->HistoryVM->Items->GetAt(0));
     String ^ expression1 = L"1   +   2 =";
@@ -402,7 +402,7 @@ TEST_METHOD(MultipleModesHistoryAddItemTest)
     VERIFY_ARE_EQUAL(result1, item1->Result, nullptr, LINE_INFO());
 
     // Assert for the history list items of 2nd instance
-    VERIFY_IS_TRUE(1 == viewModels[1]->HistoryVM->ItemSize, nullptr, LINE_INFO());
+    VERIFY_IS_TRUE(1 == viewModels[1]->HistoryVM->ItemsCount, nullptr, LINE_INFO());
 
     auto item2 = static_cast<HistoryItemViewModel ^>(viewModels[1]->HistoryVM->Items->GetAt(0));
     String ^ expression2 = L"1   +   2   " + UtfUtils::MUL + L"   3 =";
@@ -426,7 +426,7 @@ TEST_METHOD(MultipleStandardModesHistoryAddItemTest)
         ChangeMode(viewModels[i], 0);
 
         // Validate that the history items list is initially empty
-        VERIFY_IS_TRUE(0 == viewModels[i]->HistoryVM->ItemSize, nullptr, LINE_INFO());
+        VERIFY_IS_TRUE(0 == viewModels[i]->HistoryVM->ItemsCount, nullptr, LINE_INFO());
     }
 
     // Perform Calculations on both the instances and check that the History items work independently
@@ -459,7 +459,7 @@ TEST_METHOD(MultipleStandardModesHistoryAddItemTest)
     // Assert for the history list items of the instances
     for (int i = 0; i < 2; i++)
     {
-        VERIFY_IS_TRUE(1 == viewModels[i]->HistoryVM->ItemSize, nullptr, LINE_INFO());
+        VERIFY_IS_TRUE(1 == viewModels[i]->HistoryVM->ItemsCount, nullptr, LINE_INFO());
 
         auto item = static_cast<HistoryItemViewModel ^>(viewModels[i]->HistoryVM->Items->GetAt(0));
 
@@ -482,7 +482,7 @@ TEST_METHOD(MultipleScientificModesHistoryAddItemTest)
         ChangeMode(viewModels[i], 1);
 
         // Validate that the history items list is initially empty
-        VERIFY_IS_TRUE(0 == viewModels[i]->HistoryVM->ItemSize, nullptr, LINE_INFO());
+        VERIFY_IS_TRUE(0 == viewModels[i]->HistoryVM->ItemsCount, nullptr, LINE_INFO());
     }
 
     // Perform Calculations on both the instances and check that the History items work independently
@@ -515,7 +515,7 @@ TEST_METHOD(MultipleScientificModesHistoryAddItemTest)
     // Assert for the history list items of the instances
     for (int i = 0; i < 2; i++)
     {
-        VERIFY_IS_TRUE(1 == viewModels[i]->HistoryVM->ItemSize, nullptr, LINE_INFO());
+        VERIFY_IS_TRUE(1 == viewModels[i]->HistoryVM->ItemsCount, nullptr, LINE_INFO());
 
         auto item = static_cast<HistoryItemViewModel ^>(viewModels[i]->HistoryVM->Items->GetAt(0));
 
